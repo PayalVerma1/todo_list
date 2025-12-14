@@ -1,10 +1,11 @@
 use std::fs::OpenOptions;
 use std::io::Write;
+use std::task::Context;
 use std::{io, option};
 
 use std::fs;
 fn main() {
-    println!("Choose option: add / remove");
+    println!("Choose option: add / remove / update / done / undone");
 
     let mut option = String::new();
     io::stdin().read_line(&mut option).unwrap();
@@ -27,16 +28,27 @@ fn main() {
             show_todos();
         }
         "update" => {
-           
-           let mut input=String::new();
-              println!("Enter todo to update:");
-                io::stdin().read_line(&mut input).unwrap();
+            let mut input = String::new();
+            println!("Enter todo to update:");
+            io::stdin().read_line(&mut input).unwrap();
             let to_update = input.trim().to_string();
-            let mut new_input=String::new();
-              println!("Enter new todo:");
-                io::stdin().read_line(&mut new_input).unwrap();
+            let mut new_input = String::new();
+            println!("Enter new todo:");
+            io::stdin().read_line(&mut new_input).unwrap();
             let new_todo = new_input.trim().to_string();
             update_todo(&to_update, &new_todo);
+            show_todos();
+        }
+        "done"=>{
+            let mut input =String::new();
+            io::stdin().read_line(&mut input).unwrap();
+            mark_done(&input.trim());
+            show_todos();
+        }
+        "undone"=>{
+            let mut input =String::new();
+            io::stdin().read_line(&mut input).unwrap();
+            unmark_done(&input.trim());
             show_todos();
         }
         _ => {
@@ -53,8 +65,6 @@ fn save_todo(todo: &str) {
         .expect("Cannot open file");
 
     writeln!(file, "{}", todo).expect("Cannot write");
-    
-    
 }
 fn remove_todo(todo_to_remove: &str) {
     let content = fs::read_to_string("todo.txt").expect("Cannot read file");
@@ -65,7 +75,7 @@ fn remove_todo(todo_to_remove: &str) {
         .collect();
 
     fs::write("todo.txt", todos.join("\n")).expect("Cannot write file");
-    println!("Todo removed (if it existed).");
+    println!("Todo removed");
 }
 fn update_todo(to_update: &str, new_todo: &str) {
     let content = fs::read_to_string("todo.txt").expect("Cannot read file");
@@ -77,9 +87,7 @@ fn update_todo(to_update: &str, new_todo: &str) {
     let mut updated_todos = todos;
     updated_todos.push(new_todo.to_string());
     fs::write("todo.txt", updated_todos.join("\n")).expect("Cannot write file");
-    println!("Todo updated (if it existed).");
-
-
+    println!("Todo updated");
 }
 fn show_todos() {
     match fs::read_to_string("todo.txt") {
@@ -96,4 +104,43 @@ fn show_todos() {
         Err(_) => println!("No todo file found."),
     }
 }
+fn mark_done(todo_to_mark: &str) {
+    let content = fs::read_to_string("todo.txt")
+        .expect("Cannot read file");
 
+    let todos: Vec<String> = content
+        .lines()
+        .map(|line| {
+            if line.trim() == todo_to_mark {
+                format!("Done {}", line)
+            } else {
+                line.to_string()
+            }
+        })
+        .collect();
+
+    fs::write("todo.txt", todos.join("\n"))
+        .expect("Cannot write file");
+
+    println!("Todo marked as done");
+}
+fn unmark_done(todo_to_unmark: &str) {
+    let content = fs::read_to_string("todo.txt")
+        .expect("Cannot read file");
+
+    let todos: Vec<String> = content
+        .lines()
+        .map(|line| {
+            if line.trim() == format!("Done {}", todo_to_unmark) {
+                todo_to_unmark.to_string()
+            } else {
+                line.to_string()
+            }
+        })
+        .collect();
+
+    fs::write("todo.txt", todos.join("\n"))
+        .expect("Cannot write file");
+
+    println!("Todo marked as undone");
+}
